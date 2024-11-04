@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Install Nginx with RTMP module
+# Update package list and install Nginx with RTMP module
 echo "Installing Nginx with RTMP module..."
 sudo apt update
-sudo apt install -y libnginx-mod-rtmp nginx
+sudo apt install -y nginx libnginx-mod-rtmp
 
 # Check if Nginx is installed correctly
 if ! command -v nginx &> /dev/null; then
@@ -41,7 +41,7 @@ http {
         }
 
         location /stat.xsl {
-            root /usr/local/nginx/html;
+            root /usr/share/nginx/html;
         }
     }
 }
