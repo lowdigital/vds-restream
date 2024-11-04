@@ -1,44 +1,44 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status
+# Немедленный выход при ошибке
 set -e
 
-# Function to display messages
+# Функция для вывода сообщений
 log() {
     echo -e "\e[32m$1\e[0m"
 }
 
-# Check if the script is run as root
+# Проверка, выполняется ли скрипт от имени root
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run the script as root."
+    echo "Пожалуйста, запустите скрипт от имени root."
     exit 1
 fi
 
-# Step 1: Remove existing Nginx installations (if any)
-log "Removing existing Nginx installations..."
+# Шаг 1: Удаление Nginx и связанных пакетов (если они установлены)
+log "Удаление существующих установок Nginx..."
 apt purge -y nginx nginx-common nginx-full libnginx-mod-rtmp || true
 apt autoremove -y || true
 rm -rf /etc/nginx
 
-# Step 2: Update package lists
-log "Updating package lists..."
+# Шаг 2: Обновление списка пакетов
+log "Обновление списка пакетов..."
 apt update
 
-# Step 3: Install Nginx
-log "Installing Nginx..."
+# Шаг 3: Установка Nginx
+log "Установка Nginx..."
 apt install -y nginx
 
-# Step 4: Check Nginx status
-log "Checking Nginx status..."
+# Шаг 4: Проверка работы Nginx
+log "Проверка работы Nginx..."
 systemctl start nginx
 systemctl enable nginx
 
-# Step 5: Install RTMP module
-log "Installing RTMP module..."
+# Шаг 5: Установка модуля RTMP
+log "Установка модуля RTMP..."
 apt install -y libnginx-mod-rtmp
 
-# Step 6: Configure RTMP
-log "Configuring RTMP..."
+# Шаг 6: Настройка RTMP
+log "Настройка RTMP..."
 cat > /etc/nginx/rtmp.conf <<EOF
 rtmp {
     server {
@@ -53,40 +53,40 @@ rtmp {
 }
 EOF
 
-# Step 7: Include rtmp.conf in nginx.conf after events {} block and before http {}
+# Шаг 7: Включение rtmp.conf в nginx.conf после блока events {} и перед http {}
 NGINX_CONF="/etc/nginx/nginx.conf"
 
-# Ensure events { } block exists
+# Убедимся, что блок events { } существует
 if ! grep -q "events {" "$NGINX_CONF"; then
     sed -i '/^pid/a events {\n    worker_connections 1024;\n}' "$NGINX_CONF"
-    log "Added events { } block to nginx.conf"
+    log "Добавлен блок events { } в nginx.conf"
 fi
 
-# Add worker_connections if not present
+# Если в блоке events { } нет worker_connections, добавим его
 if ! grep -q "worker_connections" "$NGINX_CONF"; then
     sed -i '/events {/a \    worker_connections 1024;' "$NGINX_CONF"
 fi
 
-# Include rtmp.conf after events { } block
+# Включаем rtmp.conf после блока events { }
 if ! grep -q "include /etc/nginx/rtmp.conf;" "$NGINX_CONF"; then
     sed -i '/events {/,/}/!b;/}/a include /etc/nginx/rtmp.conf;' "$NGINX_CONF"
-    log "Included /etc/nginx/rtmp.conf after events { } block"
+    log "Добавлен include /etc/nginx/rtmp.conf; после блока events { }"
 fi
 
-# Ensure http { } block exists and includes conf.d/*.conf
+# Убедимся, что блок http { } существует и включает файлы из conf.d
 if ! grep -q "^http {" "$NGINX_CONF"; then
     echo -e "\nhttp {\n    include /etc/nginx/mime.types;\n    default_type application/octet-stream;\n    include /etc/nginx/conf.d/*.conf;\n}" >> "$NGINX_CONF"
-    log "Added http { } block to nginx.conf"
+    log "Добавлен блок http { } в nginx.conf"
 else
-    # Ensure conf.d/*.conf is included inside http { } block
+    # Убедимся, что include /etc/nginx/conf.d/*.conf; находится внутри блока http { }
     if ! grep -q "include /etc/nginx/conf.d/\*\.conf;" "$NGINX_CONF"; then
         sed -i '/^http {/a \    include /etc/nginx/conf.d/*.conf;' "$NGINX_CONF"
-        log "Included /etc/nginx/conf.d/*.conf in http { } block"
+        log "Добавлен include /etc/nginx/conf.d/*.conf; в блок http { }"
     fi
 fi
 
-# Step 8: Configure RTMP statistics
-log "Configuring RTMP statistics..."
+# Шаг 8: Настройка статистики RTMP
+log "Настройка статистики RTMP..."
 cat > /etc/nginx/conf.d/stat.conf <<EOF
 server {
     listen 8080;
@@ -102,83 +102,83 @@ server {
 }
 EOF
 
-# Step 9: Test Nginx configuration
-log "Testing Nginx configuration..."
+# Шаг 9: Проверка конфигурации Nginx
+log "Проверка конфигурации Nginx..."
 nginx -t
 
-# Step 10: Restart Nginx
-log "Restarting Nginx..."
+# Шаг 10: Перезапуск Nginx
+log "Перезапуск Nginx..."
 systemctl restart nginx
 
-# Step 11: Create restream user
-log "Creating restream user..."
+# Шаг 11: Создание пользователя для ретрансляции
+log "Создание пользователя restream..."
 useradd -r -s /usr/sbin/nologin restream || true
 
-# Step 12: Install FFmpeg
-log "Installing FFmpeg..."
+# Шаг 12: Установка FFmpeg
+log "Установка FFmpeg..."
 apt install -y ffmpeg
 
-# Step 13: Prompt for stream keys
-log "Requesting stream keys..."
-read -p "Enter YouTube stream key (leave blank if not needed): " YOUTUBE_KEY
-read -p "Enter Twitch stream key (leave blank if not needed): " TWITCH_KEY
-read -p "Enter VK stream key (leave blank if not needed): " VK_KEY
+# Шаг 13: Запрос ключей потоков у пользователя
+log "Запрос ключей потоков..."
+read -p "Введите ключ потока YouTube (оставьте пустым, если не требуется): " YOUTUBE_KEY
+read -p "Введите ключ потока Twitch (оставьте пустым, если не требуется): " TWITCH_KEY
+read -p "Введите ключ потока VK (оставьте пустым, если не требуется): " VK_KEY
 
-# Step 14: Create configuration file with keys
-log "Creating configuration file with stream keys..."
-mkdir -p /home/restream
-chown restream:restream /home/restream
-
+# Шаг 14: Создание файла конфигурации с ключами
+log "Создание файла конфигурации с ключами..."
 cat > /home/restream/stream_keys.conf <<EOF
 YOUTUBE_KEY="$YOUTUBE_KEY"
 TWITCH_KEY="$TWITCH_KEY"
 VK_KEY="$VK_KEY"
 EOF
 
-# Set permissions for the configuration file
+# Установка прав доступа к файлу конфигурации
 chmod 600 /home/restream/stream_keys.conf
 chown restream:restream /home/restream/stream_keys.conf
 
-# Step 15: Create restream script
-log "Creating restream script..."
+# Шаг 15: Создание скрипта ретрансляции
+log "Создание скрипта ретрансляции..."
+mkdir -p /home/restream
+chown restream:restream /home/restream
+
 cat > /home/restream/restream.sh <<'EOF'
 #!/bin/bash
 
-# Load stream keys from configuration file
+# Загрузка ключей потоков из файла конфигурации
 source /home/restream/stream_keys.conf
 
-# Input stream from OBS or another source
+# Входящий поток от OBS или другого источника
 INPUT_STREAM="rtmp://localhost/live/stream"
 
-# Stream URLs
+# URL-адреса для потоковой передачи
 YOUTUBE_URL="${YOUTUBE_KEY:+rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_KEY}"
 TWITCH_URL="${TWITCH_KEY:+rtmp://live.twitch.tv/app/$TWITCH_KEY}"
 VK_PLAY_URL="${VK_KEY:+rtmp://vsuc.okcdn.ru/input/$VK_KEY}"
 
-# Build ffmpeg output options
+# Построение параметров вывода ffmpeg
 OUTPUT_OPTIONS=()
 [ -n "$YOUTUBE_URL" ] && OUTPUT_OPTIONS+=("-c:v copy -c:a copy -f flv \"$YOUTUBE_URL\"")
 [ -n "$TWITCH_URL" ] && OUTPUT_OPTIONS+=("-c:v copy -c:a copy -f flv \"$TWITCH_URL\"")
 [ -n "$VK_PLAY_URL" ] && OUTPUT_OPTIONS+=("-c:v copy -c:a copy -f flv \"$VK_PLAY_URL\"")
 
-# Check if at least one output stream is configured
+# Проверка, есть ли хотя бы один выходной поток
 if [ ${#OUTPUT_OPTIONS[@]} -eq 0 ]; then
-    echo "$(date) - No output streams configured. Please check /home/restream/stream_keys.conf"
+    echo "$(date) - Нет настроенных выходных потоков. Проверьте файл /home/restream/stream_keys.conf"
     sleep 10
     exit 1
 fi
 
-# Function to relay the stream to configured platforms
+# Функция ретрансляции на указанные платформы
 relay_stream() {
-    echo "$(date) - Starting stream relay..."
+    echo "$(date) - Начало ретрансляции на платформы..."
     ffmpeg -re -i "$INPUT_STREAM" ${OUTPUT_OPTIONS[@]}
 }
 
-# Main loop
+# Основной цикл
 while true
 do
     relay_stream
-    echo "$(date) - Restarting stream in 5 seconds..."
+    echo "$(date) - Перезапуск потока через 5 секунд..."
     sleep 5
 done
 EOF
@@ -186,11 +186,11 @@ EOF
 chmod +x /home/restream/restream.sh
 chown restream:restream /home/restream/restream.sh
 
-# Step 16: Create systemd service for restreaming
-log "Creating systemd service for restreaming..."
+# Шаг 16: Создание сервиса systemd для ретрансляции
+log "Создание сервиса systemd для ретрансляции..."
 cat > /etc/systemd/system/restream.service <<EOF
 [Unit]
-Description=Restreaming service for YouTube, Twitch, and VK
+Description=Сервис ретрансляции для YouTube, Twitch и VK
 After=network.target
 
 [Service]
@@ -208,10 +208,10 @@ SyslogIdentifier=restream
 WantedBy=multi-user.target
 EOF
 
-# Step 17: Reload systemd and start the service
-log "Starting restreaming service..."
+# Шаг 17: Перезагрузка systemd и запуск сервиса
+log "Запуск сервиса ретрансляции..."
 systemctl daemon-reload
 systemctl enable restream.service
 systemctl start restream.service
 
-log "Installation complete! The restreaming service is installed, enabled on startup, and running."
+log "Установка завершена! Сервис ретрансляции установлен, включен при запуске и запущен."
