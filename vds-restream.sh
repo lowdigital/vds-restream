@@ -166,10 +166,13 @@ fi
 # Build the output string for ffmpeg using the tee muxer
 OUTPUT_STRING=$(IFS="|"; echo "${OUTPUT_URLS[*]}")
 
+# Debug output
+echo "Using output URLs: $OUTPUT_STRING"
+
 # Function to relay the stream to configured platforms
 relay_stream() {
     echo "$(date) - Starting stream relay..."
-    ffmpeg -re -i "$INPUT_STREAM" -c copy -f tee "$OUTPUT_STRING"
+    ffmpeg -re -i "$INPUT_STREAM" -map 0 -c:v copy -c:a copy -f tee "$OUTPUT_STRING" -loglevel info
 }
 
 # Main loop
