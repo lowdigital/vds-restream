@@ -2,8 +2,8 @@
 
 # Update package list and install Nginx with RTMP module
 echo "Installing Nginx with RTMP module..."
-sudo apt update
-sudo apt install -y nginx libnginx-mod-rtmp
+apt update
+apt install -y nginx libnginx-mod-rtmp
 
 # Check if Nginx is installed correctly
 if ! command -v nginx &> /dev/null; then
@@ -13,7 +13,7 @@ fi
 
 # Configure Nginx for RTMP
 echo "Configuring Nginx for RTMP..."
-sudo tee /etc/nginx/nginx.conf > /dev/null <<EOF
+tee /etc/nginx/nginx.conf > /dev/null <<EOF
 worker_processes  auto;
 events {
     worker_connections  1024;
@@ -49,7 +49,7 @@ EOF
 
 # Restart Nginx to apply the new configuration
 echo "Restarting Nginx..."
-sudo systemctl restart nginx
+systemctl restart nginx
 
 # Prompt for stream keys for each platform
 read -p "Enter YouTube stream key (leave empty if not needed): " YOUTUBE_KEY
@@ -59,7 +59,7 @@ read -p "Enter VK stream key (leave empty if not needed): " VK_KEY
 # Create the directory and script file for restreaming
 echo "Creating restreaming script..."
 mkdir -p /home/restream
-sudo tee /home/restream/restream.sh > /dev/null <<EOF
+tee /home/restream/restream.sh > /dev/null <<EOF
 #!/bin/bash
 
 # Input stream from OBS or other source
@@ -94,7 +94,7 @@ chmod +x /home/restream/restream.sh
 
 # Create the systemd service for restreaming
 echo "Creating systemd service..."
-sudo tee /etc/systemd/system/restream.service > /dev/null <<EOF
+tee /etc/systemd/system/restream.service > /dev/null <<EOF
 [Unit]
 Description=Restream Service for Broadcasting to YouTube, Twitch, and VK Play
 After=network.target
@@ -111,8 +111,8 @@ EOF
 
 # Reload systemd and start the service
 echo "Enabling and starting the restream service..."
-sudo systemctl daemon-reload
-sudo systemctl enable restream.service
-sudo systemctl start restream.service
+systemctl daemon-reload
+systemctl enable restream.service
+systemctl start restream.service
 
 echo "Restream service installed, enabled on startup, and started."
