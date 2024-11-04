@@ -51,8 +51,9 @@ bash <(wget -qO- https://raw.githubusercontent.com/lowdigital/vds-restream/main/
 ### Starting a Stream
 After installation, you can start streaming to your server:
 
-- **Streaming URL**: `rtmp://<YOUR_SERVER_IP>/live/stream`
+- **Streaming URL**: `rtmp://<YOUR_SERVER_IP>/live`
 - **Replace `<YOUR_SERVER_IP>`**: Use the actual IP address of your server.
+- **Streaming KEY**: `stream`
 
 Configure your streaming software (e.g., OBS Studio) to use the provided URL.
 
