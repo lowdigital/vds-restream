@@ -38,12 +38,6 @@ To install the restreaming service, run the following command as root:
 bash <(curl -s https://raw.githubusercontent.com/lowdigital/vds-restream/main/vds-restream.sh)
 ```
 
-Or, if `curl` is not installed:
-
-```bash
-bash <(wget -qO- https://raw.githubusercontent.com/lowdigital/vds-restream/main/vds-restream.sh)
-```
-
 **Note**: Before running, ensure you trust the source of the script.
 
 ## Usage
