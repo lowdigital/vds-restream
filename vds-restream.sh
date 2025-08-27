@@ -148,7 +148,7 @@ cat > /home/restream/restream.sh <<'EOF'
 source /home/restream/stream_keys.conf
 
 # Input stream from OBS or another source
-INPUT_STREAM="rtmp://localhost/live"
+INPUT_STREAM="rtmp://localhost/live/stream"
 
 # Build the list of output URLs
 OUTPUT_URLS=()
